@@ -1,0 +1,10 @@
+[package]
+name = "engine"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+logic-core = { path = "../logic-core" }
+domain = { path = "../domain" }
+contracts = { path = "../contracts" }
+rand = "0.8"

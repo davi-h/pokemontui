@@ -1,0 +1,21 @@
+[package]
+name = "app"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+anyhow = "1.0"
+log = "0.4"
+env_logger = "0.9"
+ratatui = "0.20"
+crossterm = "0.28"
+
+application = { path = "../application" }
+contracts = { path = "../contracts" }
+logic-core = { path = "../logic-core" }
+domain = { path = "../domain" }
+engine = { path = "../engine" }
+
+infrastructure = { path = "../infrastructure" }
+interface = { path = "../interface" }
+shared = { path = "../shared" }
