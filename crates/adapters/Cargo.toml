@@ -1,0 +1,9 @@
+[package]
+name = "adapters"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+engine = { path = "../engine" }
+reqwest = { version = "0.11", features = ["blocking", "json"] }
+serde = { version = "1", features = ["derive"] }

@@ -15,7 +15,10 @@ contracts = { path = "../contracts" }
 logic-core = { path = "../logic-core" }
 domain = { path = "../domain" }
 engine = { path = "../engine" }
-
+adapters = { path = "../adapters" }
 infrastructure = { path = "../infrastructure" }
 interface = { path = "../interface" }
 shared = { path = "../shared" }
+
+[package.metadata.layer]
+name = "app"

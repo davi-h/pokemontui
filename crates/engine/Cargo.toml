@@ -8,3 +8,6 @@ logic-core = { path = "../logic-core" }
 domain = { path = "../domain" }
 contracts = { path = "../contracts" }
 rand = "0.8"
+
+[package.metadata.layer]
+name = "engine"

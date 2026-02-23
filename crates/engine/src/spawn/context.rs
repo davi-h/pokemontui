@@ -1,6 +1,5 @@
 #[derive(Clone)]
 pub struct SpawnContext {
-    pub biome: String,
     pub time_of_day: TimeOfDay,
     pub weather: Weather,
     pub player_level: u8,
@@ -12,9 +11,10 @@ pub enum TimeOfDay {
     Night,
 }
 
-#[derive(Clone, PartialEq)]
+#[derive(Clone, Copy, PartialEq, Eq)]
 pub enum Weather {
     Clear,
     Rain,
     Storm,
+    Fog,
 }

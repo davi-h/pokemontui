@@ -1,7 +1,9 @@
 mod bootstrap;
-mod lifecycle;
+mod router;
+mod commands;
 mod runtime;
 mod container;
+mod lifecycle;
 
 use lifecycle::app::Application;
 

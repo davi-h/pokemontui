@@ -1,0 +1,9 @@
+[layers]
+
+domain = []
+contracts = ["domain"]
+application = ["domain", "contracts"]
+engine = ["domain", "contracts"]
+infrastructure = ["contracts"]
+interface = ["application"]
+app = ["application", "interface", "infrastructure", "engine"]

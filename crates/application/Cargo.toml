@@ -7,3 +7,6 @@ edition = "2024"
 contracts = { path = "../contracts" }
 engine = { path = "../engine" }
 domain = { path = "../domain" }
+
+[package.metadata.layer]
+name = "application"

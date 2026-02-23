@@ -1,21 +1,20 @@
 use contracts::rng::Rng;
-use std::cell::RefCell;
-use rand::{SeedableRng, Rng as _, rngs::StdRng};
+use rand::{SeedableRng, RngCore};
 
 pub struct SeededRng {
-    rng: RefCell<StdRng>,
+    inner: rand::rngs::StdRng,
 }
 
 impl SeededRng {
     pub fn new(seed: u64) -> Self {
         Self {
-            rng: RefCell::new(StdRng::seed_from_u64(seed)),
+            inner: rand::rngs::StdRng::seed_from_u64(seed),
         }
     }
 }
 
 impl Rng for SeededRng {
-    fn u32(&self, min: u32, max: u32) -> u32 {
-        self.rng.borrow_mut().gen_range(min..=max)
+    fn next_u32(&mut self) -> u32 {
+        self.inner.next_u32()
     }
 }
