@@ -5,6 +5,7 @@ edition = "2024"
 
 [dependencies]
 contracts = { path = "../contracts" }
+engine = { path = "../engine" }
 rand = "0.8"
 rayon = "1.8"
 reqwest = { version = "0.11", features = ["blocking", "json"] }

@@ -1,5 +1,6 @@
 use std::{
-    path::PathBuf,
+    fs,
+    path::{Path, PathBuf},
     process::Command,
 };
 
@@ -9,39 +10,51 @@ pub struct SpriteLoader {
 
 impl SpriteLoader {
     pub fn new(dir: impl Into<PathBuf>) -> Self {
-        Self { dir: dir.into() }
+        let dir = dir.into();
+        fs::create_dir_all(&dir).ok(); // garante diretório
+        Self { dir }
     }
 
-    /// Caminho do sprite
     fn path(&self, name: &str) -> PathBuf {
         self.dir.join(format!("{name}.png"))
     }
 
-    /// Verifica se sprite já existe
     pub fn exists(&self, name: &str) -> bool {
         self.path(name).exists()
     }
 
-    /// Garante que sprite exista
-    /// baixa se necessário
-    pub fn ensure(&self, name: &str) {
-        if self.exists(name) {
-            return;
+    /// Baixa sprite (core interno)
+    fn download(&self, name: &str) -> Result<(), String> {
+        let output = Command::new("pokeget")
+            .arg(name)
+            .arg("--output")
+            .arg(self.path(name))
+            .output()
+            .map_err(|e| format!("failed to run pokeget: {e}"))?;
+
+        if !output.status.success() {
+            return Err(String::from_utf8_lossy(&output.stderr).into());
         }
 
-        let _ = Command::new("pokeget")
-            .arg(name)
-            .arg("--output")
-            .arg(self.path(name))
-            .status();
+        Ok(())
     }
 
-    /// Força download
-    pub fn fetch(&self, name: &str) {
-        let _ = Command::new("pokeget")
-            .arg(name)
-            .arg("--output")
-            .arg(self.path(name))
-            .status();
+    /// garante sprite
+    pub fn ensure(&self, name: &str) -> Result<(), String> {
+        if self.exists(name) {
+            return Ok(());
+        }
+
+        self.download(name)
+    }
+
+    /// força download
+    pub fn fetch(&self, name: &str) -> Result<(), String> {
+        self.download(name)
+    }
+
+    /// caminho público para render
+    pub fn file(&self, name: &str) -> PathBuf {
+        self.path(name)
     }
 }

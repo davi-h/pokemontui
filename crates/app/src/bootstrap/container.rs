@@ -7,6 +7,7 @@ use infrastructure::{
     spawn::spawn_service::DefaultSpawnService,
     sprites::sprite_loader::SpriteLoader,
     rng::seeded_rng::SeededRng,
+    pokeapi::species_registry_builder::SpeciesRegistryBuilder,
 };
 
 use engine::{
@@ -39,7 +40,7 @@ pub fn build_container() -> ServiceRegistry {
     =========================
     */
 
-    let registry = SpeciesRegistry::load(
+    let registry = SpeciesRegistryBuilder::build(
         &api,
         &sprite_loader,
         &cache,
