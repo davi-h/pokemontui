@@ -4,7 +4,8 @@ fn main() {
     println!("🔎 Running architecture guards...\n");
 
     let metadata = cargo_metadata();
-    let deps = extract_deps(&metadata);
+    let workspace = workspace_members(&metadata);
+    let deps = extract_workspace_deps(&metadata, &workspace);
     let rules = layer_rules();
 
     let mut failed = false;
@@ -54,17 +55,39 @@ fn cargo_metadata() -> serde_json::Value {
     serde_json::from_slice(&out.stdout).expect("invalid cargo metadata JSON")
 }
 
-fn extract_deps(meta: &serde_json::Value) -> HashMap<String, Vec<String>> {
+fn workspace_members(meta: &serde_json::Value) -> Vec<String> {
+    let mut members = Vec::new();
+
+    if let Some(pkgs) = meta["packages"].as_array() {
+        for pkg in pkgs {
+            if pkg["source"].is_null() {
+                members.push(pkg["name"].as_str().unwrap().to_string());
+            }
+        }
+    }
+
+    members
+}
+
+fn extract_workspace_deps(
+    meta: &serde_json::Value,
+    workspace: &[String],
+) -> HashMap<String, Vec<String>> {
     let mut map = HashMap::new();
 
     for pkg in meta["packages"].as_array().unwrap() {
         let name = pkg["name"].as_str().unwrap().to_string();
+
+        if !workspace.iter().any(|w| w == &name) {
+            continue;
+        }
 
         let deps = pkg["dependencies"]
             .as_array()
             .unwrap()
             .iter()
             .map(|d| d["name"].as_str().unwrap().to_string())
+            .filter(|dep| workspace.iter().any(|w| w == dep))
             .collect();
 
         map.insert(name, deps);
@@ -82,12 +105,23 @@ fn extract_deps(meta: &serde_json::Value) -> HashMap<String, Vec<String>> {
 fn layer_rules() -> HashMap<&'static str, Vec<&'static str>> {
     HashMap::from([
         ("domain", vec![]),
-        ("contracts", vec!["domain"]),
-        ("application", vec!["domain", "contracts"]),
+        ("contracts", vec![]),
+        ("application", vec!["domain", "contracts", "engine"]),
         ("engine", vec!["domain", "contracts"]),
         ("infrastructure", vec!["contracts"]),
-        ("interface", vec!["application"]),
-        ("app", vec!["application", "interface", "infrastructure", "engine"]),
+        ("interface", vec!["application", "contracts"]),
+        (
+            "app",
+            vec![
+                "application",
+                "interface",
+                "infrastructure",
+                "engine",
+                "contracts",
+                "domain",
+                "shared",
+            ],
+        ),
     ])
 }
 

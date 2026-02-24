@@ -1,9 +1,9 @@
 [layers]
 
 domain = []
-contracts = ["domain"]
-application = ["domain", "contracts"]
+contracts = []
+application = ["domain", "contracts", "engine"]
 engine = ["domain", "contracts"]
 infrastructure = ["contracts"]
-interface = ["application"]
-app = ["application", "interface", "infrastructure", "engine"]
+interface = ["application", "contracts"]
+app = ["application", "interface", "infrastructure", "engine", "contracts", "domain", "shared"]
