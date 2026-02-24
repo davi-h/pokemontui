@@ -1,5 +1,6 @@
 pub mod error;
 pub mod pokemon_data_source;
+pub mod species_source;
 
 pub use pokemon_data_source::PokemonDataSource;
 pub use pokemon_data_source::PokemonApiData;

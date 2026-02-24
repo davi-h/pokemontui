@@ -1,5 +1,9 @@
 use domain::pokemon::entity::Pokemon;
+<<<<<<< HEAD
 use contracts::rng::GameRng;
+=======
+use crate::rng::GameRng; // falta essa classe aqui
+>>>>>>> 8278913 (v0.0.3)
 
 pub struct SpawnGenerator;
 

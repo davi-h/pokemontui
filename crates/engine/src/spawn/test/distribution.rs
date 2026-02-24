@@ -1,4 +1,6 @@
-use super::rng::SeededRng;
+
+
+use super::rng::SeededRng; // não existe essas duas classes
 use super::table::{SpawnEntry, SpawnTable};
 use contracts::rng::Rng;
 
