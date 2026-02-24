@@ -6,8 +6,6 @@ edition = "2024"
 [dependencies]
 contracts = { path = "../contracts" }
 domain = { path = "../domain" }
-infrastructure = { path = "../infrastructure" }
-logic-core = { path = "../logic-core" }
 rand = "0.8"
 reqwest = { version = "0.11", features = ["blocking", "json"] }
 serde = { version = "1", features = ["derive"] }
