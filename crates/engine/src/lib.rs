@@ -5,6 +5,7 @@ pub mod core;
 pub mod dex;
 pub mod factory;
 pub mod pokedex;
+pub mod probability;
 pub mod render;
 pub mod spawn;
 pub mod stats;

@@ -1,5 +1,18 @@
 use std::ops::Range;
 
+/// Contrato enxuto e universal para geração de números pseudoaleatórios.
+///
+/// Esse trait é ideal para uso em Application/Domain/Engine, sem acoplamento
+/// à crate `rand`.
+pub trait GameRng {
+    fn range_u32(&mut self, range: Range<u32>) -> u32;
+
+    fn chance_percent(&mut self, percent: u8) -> bool {
+        let clamped = percent.min(100) as u32;
+        self.range_u32(0..100) < clamped
+    }
+}
+
 pub trait Rng {
     /// Número bruto
     fn next_u32(&mut self) -> u32;
@@ -49,5 +62,13 @@ pub trait Rng {
         }
 
         &items[0].0
+    }
+}
+
+/// Compatibilidade: qualquer implementação legacy de `Rng` passa a atender
+/// também o contrato `GameRng`.
+impl<T: Rng + ?Sized> GameRng for T {
+    fn range_u32(&mut self, range: Range<u32>) -> u32 {
+        self.u32(range.start, range.end)
     }
 }
