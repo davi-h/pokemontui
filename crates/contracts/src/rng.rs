@@ -65,6 +65,7 @@ pub trait Rng {
     }
 }
 
+<<<<<<< HEAD
 /// Compatibilidade: qualquer implementação legacy de `Rng` passa a atender
 /// também o contrato `GameRng`.
 impl<T: Rng + ?Sized> GameRng for T {
@@ -72,3 +73,15 @@ impl<T: Rng + ?Sized> GameRng for T {
         self.u32(range.start, range.end)
     }
 }
+=======
+
+/// Trait de RNG abstrato usado pelo domínio.
+/// 
+/// Motivo:
+/// - permitir mock em testes
+/// - desacoplar engine de rand crate
+/// - permitir RNG determinístico
+pub trait GameRng {
+    fn range(&mut self, range: std::ops::Range<u32>) -> u32;
+}
+>>>>>>> 694a416 (v0.0.4)

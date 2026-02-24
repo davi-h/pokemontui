@@ -1,6 +1,7 @@
+#[cfg(test)]
 use domain::pokemon::entity::Pokemon;
 use crate::factory::pokemon_factory::PokemonFactory;
-use super::encounter_table::EncounterTable; // Classe ainda não criada
+//use super::encounter_table::EncounterTable; // Classe ainda não criada
 
 pub struct SpawnEngine<F> {
     factory: F,

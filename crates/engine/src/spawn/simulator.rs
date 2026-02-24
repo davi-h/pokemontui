@@ -1,5 +1,6 @@
 use std::collections::HashMap;
-use super::{engine::SpawnEngine, registry::SpawnRegistry, context::SpawnContext}; // classe não existe
+use super::{registry::SpawnRegistry, context::SpawnContext};
+use crate::spawn::engine::SpawnEngine;
 
 pub fn simulate(
     engine: &mut SpawnEngine,

@@ -1,7 +1,7 @@
 
 
-use super::rng::SeededRng; // não existe essas duas classes
-use super::table::{SpawnEntry, SpawnTable};
+use crate::spawn::rng::SeededRng;
+use crate::spawn::table::{SpawnEntry, SpawnTable};
 use contracts::rng::Rng;
 
 #[derive(Clone)]

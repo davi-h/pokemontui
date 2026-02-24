@@ -5,20 +5,18 @@ use infrastructure::{
     cache::file_cache::FileCache,
     storage::save_repository::SaveRepository,
     spawn::spawn_service::DefaultSpawnService,
-    sprites::sprite_loader::SpriteLoader,
     rng::seeded_rng::SeededRng,
-    pokeapi::species_registry_builder::SpeciesRegistryBuilder,
+    sprites::sprite_gateway_impl::SpriteGatewayImpl,
 };
+
+use application::pokedex::species_registry_builder::SpeciesRegistryBuilder;
 
 use engine::{
     battle::engine::BattleEngine,
-    factory::{
-        pokemon_factory::DefaultPokemonFactory,
-        species_registry::SpeciesRegistry,
-    },
+    factory::pokemon_factory::DefaultPokemonFactory,
 };
 
-pub fn build_container() -> ServiceRegistry {
+pub async fn build_container() -> ServiceRegistry {
     let mut c = ServiceRegistry::new();
 
     /*
@@ -30,21 +28,24 @@ pub fn build_container() -> ServiceRegistry {
     let rng = SeededRng::new(42);
     let api = PokeApiClient::new();
 
-    let sprite_loader = SpriteLoader::new("assets/sprites");
+    let sprite_gateway =
+        SpriteGatewayImpl::new("assets/cache/sprites".into());
+
     let cache = FileCache::new("assets/cache");
     let save_repo = SaveRepository::new("assets/saves/save.json");
 
     /*
     =========================
-    REGISTRY (species válidas)
+    REGISTRY
     =========================
     */
 
     let registry = SpeciesRegistryBuilder::build(
         &api,
-        &sprite_loader,
-        &cache,
-    ).expect("failed to load species");
+        &sprite_gateway,
+    )
+    .await
+    .expect("failed to load species");
 
     let species_pool: Vec<String> =
         registry.all().cloned().collect();
@@ -86,7 +87,7 @@ pub fn build_container() -> ServiceRegistry {
 
     c.register(cache);
     c.register(save_repo);
-    c.register(sprite_loader);
+    c.register(sprite_gateway);
     c.register(registry);
     c.register(pokemon_factory);
     c.register(battle_engine);

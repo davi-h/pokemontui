@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 use contracts::rng::{GameRng, Rng};
 use rand::RngCore;
 
@@ -14,3 +15,15 @@ impl GameRng for DefaultRng {
         self.u32(range.start, range.end)
     }
 }
+=======
+use rand::Rng;
+use contracts::rng::GameRng;
+
+pub struct DefaultRng;
+
+impl GameRng for DefaultRng {
+    fn range(&mut self, range: std::ops::Range<u32>) -> u32 {
+        rand::thread_rng().gen_range(range)
+    }
+}
+>>>>>>> 694a416 (v0.0.4)

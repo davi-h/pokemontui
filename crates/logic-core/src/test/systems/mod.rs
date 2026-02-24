@@ -1,6 +1,6 @@
 //! Game systems such as rarity calculation and trait generation.
 
-use crate::models::Pokemon;
+use super::models::*;
 
 pub struct Rarity {
     pub capture_rate: f32,

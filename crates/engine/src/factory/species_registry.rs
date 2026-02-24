@@ -1,31 +1,40 @@
 use std::collections::HashSet;
+use std::sync::Arc;
 
-/// Registro global de espécies válidas.
-///
-/// Responsabilidades:
-/// - armazenar nomes suportados
-/// - validar espécie
 #[derive(Clone)]
 pub struct SpeciesRegistry {
-    species: HashSet<String>,
+    list: Arc<[String]>,
+    index: HashSet<String>,
 }
 
 impl SpeciesRegistry {
     pub fn new(list: impl IntoIterator<Item = String>) -> Self {
+        let vec: Vec<String> = list.into_iter().collect();
+        let index = vec.iter().cloned().collect();
+
         Self {
-            species: list.into_iter().collect(),
+            list: vec.into(),
+            index,
         }
     }
 
+    #[inline]
     pub fn contains(&self, name: &str) -> bool {
-        self.species.contains(name)
+        self.index.contains(name)
     }
 
+    #[inline]
     pub fn all(&self) -> impl Iterator<Item = &String> {
-        self.species.iter()
+        self.list.iter()
     }
 
+    #[inline]
     pub fn len(&self) -> usize {
-        self.species.len()
+        self.list.len()
+    }
+
+    #[inline]
+    pub fn is_empty(&self) -> bool {
+        self.list.is_empty()
     }
 }
