@@ -4,10 +4,14 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-logic-core = { path = "../logic-core" }
-domain = { path = "../domain" }
 contracts = { path = "../contracts" }
+domain = { path = "../domain" }
+infrastructure = { path = "../infrastructure" }
+logic-core = { path = "../logic-core" }
 rand = "0.8"
+reqwest = { version = "0.11", features = ["blocking", "json"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
 
 [package.metadata.layer]
 name = "engine"

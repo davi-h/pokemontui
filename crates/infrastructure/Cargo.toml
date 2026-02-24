@@ -6,8 +6,11 @@ edition = "2024"
 [dependencies]
 contracts = { path = "../contracts" }
 rand = "0.8"
-serde = { version = "1", features = ["derive"] }
+rayon = "1.8"
 reqwest = { version = "0.11", features = ["blocking", "json"] }
+serde_json = "1"
+serde = "1"
+
 
 [package.metadata.layer]
 name = "infrastructure"

@@ -6,7 +6,7 @@ pub mod distribution;
 pub mod encounter_table;
 pub mod engine;
 pub mod entry;
-pub mod enviroment;
+pub mod environment;
 pub mod event_bus;
 pub mod generator;
 pub mod pool;

@@ -1,4 +1,6 @@
-# 🧬 PokémonTUI — Plataforma de Simulação de Criaturas via Terminal
+#DISCLAIMER - AI USED IN THIS PROJECT 
+
+🧬 PokémonTUI — Plataforma de Simulação de Criaturas via Terminal
 
 PokémonTUI é uma plataforma de simulação de criaturas executada inteiramente no terminal.
 

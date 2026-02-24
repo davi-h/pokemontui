@@ -4,15 +4,25 @@ pub trait Rng {
     /// Número bruto
     fn next_u32(&mut self) -> u32;
 
-    /// Range inteiro
+    /// Range inteiro (usize)
     fn range(&mut self, range: Range<usize>) -> usize {
         let size = range.end - range.start;
         (self.next_u32() as usize % size) + range.start
     }
 
+    /// Range inteiro u32
+    fn u32(&mut self, min: u32, max: u32) -> u32 {
+        min + (self.next_u32() % (max - min))
+    }
+
     /// Float 0.0 — 1.0
     fn float(&mut self) -> f32 {
         self.next_u32() as f32 / u32::MAX as f32
+    }
+
+    /// Alias compatibilidade
+    fn f32(&mut self) -> f32 {
+        self.float()
     }
 
     /// Probabilidade simples

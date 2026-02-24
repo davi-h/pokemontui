@@ -1,5 +1,6 @@
 use super::rng::SeededRng;
 use super::table::{SpawnEntry, SpawnTable};
+use contracts::rng::Rng;
 
 #[derive(Clone)]
 pub struct SpawnResult {
@@ -23,14 +24,19 @@ impl SpawnEngine {
             return None;
         }
 
-        let roll = self.rng.range(0, table.total_weight());
+        let total = table.total_weight();
+        if total == 0 {
+            return None;
+        }
 
-        let mut acc = 0;
+        let roll = self.rng.range(0..total as usize);
+
+        let mut acc: u32 = 0;
 
         for entry in &table.entries {
-            acc += entry.weight;
+            acc += entry.base_weight;
 
-            if roll < acc {
+            if roll < acc as usize{
                 return Some(self.build_result(entry));
             }
         }
@@ -41,7 +47,7 @@ impl SpawnEngine {
     fn build_result(&mut self, entry: &SpawnEntry) -> SpawnResult {
         let level = self
             .rng
-            .range(entry.min_level as u32, entry.max_level as u32 + 1) as u8;
+            .range(entry.min_level as usize..(entry.max_level as usize + 1)) as u8;
 
         SpawnResult {
             species: entry.species.clone(),

@@ -1,3 +1,5 @@
+use contracts::rng::Rng;
+
 pub struct EncounterEntry {
     pub species: &'static str,
     pub weight: u32,
@@ -16,7 +18,7 @@ impl EncounterTable {
         Self { entries, total_weight }
     }
 
-    pub fn pick<'a, R: contracts::rng::Rng>(&'a self, rng: &R) -> &'a EncounterEntry {
+    pub fn pick<'a, R: Rng>(&'a self, rng: &mut R) -> &'a EncounterEntry {
         let roll = rng.u32(0, self.total_weight);
 
         let mut acc = 0;

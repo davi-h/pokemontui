@@ -5,8 +5,11 @@ pub struct SpawnPokemon<F: PokemonFactory> {
 }
 
 impl<F: PokemonFactory> SpawnPokemon<F> {
-    pub fn execute(&self) {
+    pub fn execute(&mut self) {
         let p = self.factory.create("pikachu", 5);
-        println!("spawned {}", p.name);
+        match p {
+        Ok(p) => println!("{}", p.name),
+        Err(e) => println!("spawn failed: {:?}", e),
+        }
     }
 }

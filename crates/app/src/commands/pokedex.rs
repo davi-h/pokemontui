@@ -1,5 +1,7 @@
 use engine::pokedex::service::PokedexService;
-use adapters::{pokeapi_client::PokeApiClient, sprite_renderer::SpriteRenderer};
+use infrastructure::{api::pokeapi_client::PokeApiClient, sprites::sprite_loader::SpriteLoader};
+use contracts::api::pokemon_data_source::PokemonDataSource;
+
 
 pub struct PokedexCommand {
     service: PokedexService,
@@ -15,16 +17,18 @@ impl PokedexCommand {
     }
 
     pub fn run(&mut self) {
-        let names = self.api.fetch(
-            self.service.page() * 9,
-            9
-        );
+        let names = vec![
+            "bulbasaur".into(),
+            "charmander".into(),
+            "squirtle".into(),
+        ];
 
         let entries = self.service.build_entries(names);
+        let loader = SpriteLoader::new("assets/sprites");
 
         for e in entries {
             println!("==== {} (lvl {}) ====", e.name, e.level);
-            SpriteRenderer::show(&e.name);
+            loader.fetch(&e.name);
         }
     }
 }

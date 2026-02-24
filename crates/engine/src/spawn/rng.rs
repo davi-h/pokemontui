@@ -1,3 +1,5 @@
+use contracts::rng::Rng;
+use std::ops::Range;
 
 #[derive(Clone)]
 pub struct SeededRng {
@@ -8,8 +10,10 @@ impl SeededRng {
     pub fn new(seed: u64) -> Self {
         Self { state: seed }
     }
+}
 
-    pub fn next_u32(&mut self) -> u32 {
+impl Rng for SeededRng {
+    fn next_u32(&mut self) -> u32 {
         // Xorshift64*
         let mut x = self.state;
         x ^= x >> 12;
@@ -19,7 +23,8 @@ impl SeededRng {
         ((x.wrapping_mul(2685821657736338717)) >> 32) as u32
     }
 
-    pub fn range(&mut self, min: u32, max: u32) -> u32 {
-        min + (self.next_u32() % (max - min))
+    fn range(&mut self, range: Range<usize>) -> usize {
+        let size = range.end - range.start;
+        (self.next_u32() as usize % size) + range.start
     }
 }

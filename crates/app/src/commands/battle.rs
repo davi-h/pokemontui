@@ -8,7 +8,7 @@ use engine::battle::{engine::BattleEngine, state::BattleState, action::BattleAct
 use engine::factory::pokemon_factory::DefaultPokemonFactory;
 use infrastructure::rng::seeded_rng::SeededRng;
 use engine::factory::pokemon_factory::PokemonFactory;
-
+use infrastructure::api::pokeapi_client::PokeApiClient;
 use crate::bootstrap::container::build_container;
 
 pub struct BattleCommand;
@@ -30,11 +30,11 @@ impl Command for BattleCommand {
 
         {
             let factory = container
-                .resolve::<DefaultPokemonFactory<SeededRng>>()
-                .unwrap();
+                .resolve_mut::<DefaultPokemonFactory<SeededRng, PokeApiClient>>()
+                .unwrap() ;  
 
-            player = factory.create("pikachu", 5);
-            enemy = factory.create("bulbasaur", 5);
+            player = factory.create("pikachu", 5).unwrap();
+            enemy = factory.create("charmander", 5).unwrap();
         }
 
         let mut engine = container.resolve_mut::<BattleEngine>().unwrap();

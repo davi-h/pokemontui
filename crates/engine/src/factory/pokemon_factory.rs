@@ -1,73 +1,112 @@
+use std::collections::HashSet;
+
+use contracts::api::pokemon_data_source::PokemonDataSource;
+use contracts::api::error::ApiError;
 use contracts::rng::Rng;
+
 use domain::pokemon::{
     builder::PokemonBuilder,
-    entity::Pokemon,
     stats::Stats,
+    entity::Pokemon,
 };
 
-use super::species_registry::SpeciesRegistry;
-use super::error::FactoryError;
-
+/// Trait responsável por construir Pokémons
 pub trait PokemonFactory {
-    fn create(&self, name: &str, level: u8) -> Result<Pokemon, FactoryError>;
-    fn create_random(&self, level: u8) -> Result<Pokemon, FactoryError>;
+    fn create(&mut self, name: &str, level: u8) -> Result<Pokemon, FactoryError>;
+    fn create_random(&mut self, level: u8) -> Result<Pokemon, FactoryError>;
 }
 
-pub struct DefaultPokemonFactory<R, S>
+#[derive(Debug)]
+pub enum FactoryError {
+    Api(ApiError),
+    NoSpeciesAvailable,
+    UnknownSpecies(String),
+}
+
+/// Implementação padrão de fábrica
+pub struct DefaultPokemonFactory<R, D>
 where
     R: Rng,
-    S: SpeciesRegistry,
+    D: PokemonDataSource,
 {
     rng: R,
-    registry: S,
+    data: D,
+
+    /// pool para sorteio
+    species_pool: Vec<String>,
+
+    /// índice para validação rápida
+    species_index: HashSet<String>,
 }
 
-impl<R, S> DefaultPokemonFactory<R, S>
+impl<R, D> DefaultPokemonFactory<R, D>
 where
     R: Rng,
-    S: SpeciesRegistry,
+    D: PokemonDataSource,
 {
-    pub fn new(rng: R, registry: S) -> Self {
-        Self { rng, registry }
-    }
+    pub fn new(rng: R, data: D, species_pool: Vec<String>) -> Self {
+        let species_index = species_pool.iter().cloned().collect();
 
-    fn roll_stats(&self) -> Stats {
-        Stats {
-            hp: self.rng.u32(20, 40) as u16,
-            attack: self.rng.u32(10, 30) as u16,
-            defense: self.rng.u32(10, 30) as u16,
-            speed: self.rng.u32(10, 30) as u16,
+        Self {
+            rng,
+            data,
+            species_pool,
+            species_index,
         }
     }
-}
 
-impl<R, S> PokemonFactory for DefaultPokemonFactory<R, S>
-where
-    R: Rng,
-    S: SpeciesRegistry,
-{
-    fn create(&self, name: &str, level: u8) -> Result<Pokemon, FactoryError> {
-        let species = self
-            .registry
-            .get(name)
-            .ok_or_else(|| FactoryError::UnknownSpecies(name.into()))?;
+    /// Cria Pokémon específico
+    fn build(&mut self, name: &str, level: u8) -> Result<Pokemon, FactoryError> {
+        let api_data = self.data.fetch(name).map_err(FactoryError::Api)?;
+
+        let stats = Stats::from_base(
+            api_data.base_stats.hp,
+            api_data.base_stats.attack,
+            api_data.base_stats.defense,
+            api_data.base_stats.special_attack,
+            api_data.base_stats.special_defense,
+            api_data.base_stats.speed,
+        )
+        .scale_with_level(level);
+
+        let shiny_roll = self.rng.range(0..4096);
+        let shiny = shiny_roll == 0;
 
         Ok(
-            PokemonBuilder::new(species.into())
+            PokemonBuilder::new(api_data.name)
                 .level(level)
-                .stats(self.roll_stats())
+                .stats(stats)
+                .shiny(shiny)
                 .build()
         )
     }
+}
 
-    fn create_random(&self, level: u8) -> Result<Pokemon, FactoryError> {
-        if self.registry.len() == 0 {
-            return Err(FactoryError::EmptyRegistry);
+impl<R, D> PokemonFactory for DefaultPokemonFactory<R, D>
+where
+    R: Rng,
+    D: PokemonDataSource,
+{
+    /// Cria Pokémon específico
+    fn create(&mut self, name: &str, level: u8) -> Result<Pokemon, FactoryError> {
+        if !self.species_index.contains(name) {
+            return Err(FactoryError::UnknownSpecies(name.into()));
         }
 
-        let index = self.rng.range(0..self.registry.len());
-        let species = self.registry.random(index).unwrap();
+        self.build(name, level)
+    }
 
-        self.create(species, level)
+    /// Cria Pokémon aleatório
+    fn create_random(&mut self, level: u8) -> Result<Pokemon, FactoryError> {
+        if self.species_pool.is_empty() {
+            return Err(FactoryError::NoSpeciesAvailable);
+        }
+
+        let idx = self.rng.range(0..self.species_pool.len());
+
+        // clone evita conflito de borrow mutável + imutável
+        let name = self.species_pool[idx].clone();
+
+        self.build(&name, level)
     }
 }

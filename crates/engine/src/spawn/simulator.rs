@@ -11,7 +11,7 @@ pub fn simulate(
 
     for _ in 0..rolls {
         if let Some(r) = engine.spawn(ctx, reg) {
-            *map.entry(r.species).or_insert(0) += 1;
+            *map.entry(r.species.clone()).or_insert(0) += 1;
         }
     }
 

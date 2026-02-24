@@ -1,6 +1,7 @@
 pub mod api;
 pub mod cache;
-pub mod storage;
+pub mod pokeapi;
+pub mod rng;
 pub mod spawn;
 pub mod sprites;
-pub mod rng;
+pub mod storage;
