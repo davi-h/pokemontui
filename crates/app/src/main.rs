@@ -7,7 +7,8 @@ mod lifecycle;
 
 use lifecycle::app::Application;
 
-fn main() {
+#[tokio::main]
+async fn main() {
     let app = Application::build();
     app.run();
 }

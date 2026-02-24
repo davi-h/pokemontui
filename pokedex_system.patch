@@ -1,0 +1,225 @@
+diff --git a/crates/contracts/src/api/species_source.rs b/crates/contracts/src/api/species_source.rs
+new file mode 100644
+--- /dev/null
++++ b/crates/contracts/src/api/species_source.rs
+@@
++use crate::api::error::ApiError;
++
++pub trait SpeciesSource {
++    fn all_species(&self) -> Result<Vec<String>, ApiError>;
++}
+
+diff --git a/crates/contracts/src/api/mod.rs b/crates/contracts/src/api/mod.rs
+@@
+ pub mod error;
+ pub mod pokemon_data_source;
++pub mod species_source;
+
+diff --git a/crates/contracts/src/sprites.rs b/crates/contracts/src/sprites.rs
+@@
+ pub trait SpriteGateway: Send + Sync {
++    fn has(&self, name: &str) -> bool;
++    fn request(&self, name: &str);
++    fn request_batch(&self, names: &[String]);
+ }
+
+diff --git a/crates/infrastructure/src/pokeapi/species_loader.rs b/crates/infrastructure/src/pokeapi/species_loader.rs
+@@
++use contracts::api::species_source::SpeciesSource;
+ use contracts::api::error::ApiError;
+
+ pub struct PokeApiSpeciesProvider {
+     client: PokeApiClient,
+     cache: FileCache,
+ }
+
++impl SpeciesSource for PokeApiSpeciesProvider {
++    fn all_species(&self) -> Result<Vec<String>, ApiError> {
++        if let Some(list) = self.cache.load_species()? {
++            return Ok(list);
++        }
++
++        let list = self.client.fetch_species()?;
++        self.cache.save_species(&list)?;
++        Ok(list)
++    }
++}
+
+diff --git a/crates/infrastructure/src/sprites/sprite_loader.rs b/crates/infrastructure/src/sprites/sprite_loader.rs
+@@
++use std::collections::{HashSet, VecDeque};
++use std::sync::{Arc, Mutex};
++use contracts::sprites::SpriteGateway;
++
++pub struct SpriteLoader {
++    state: Arc<Mutex<State>>,
++}
++
++struct State {
++    queue: VecDeque<String>,
++    in_progress: HashSet<String>,
++    done: HashSet<String>,
++}
++
++impl SpriteLoader {
++    pub fn new() -> Self {
++        Self {
++            state: Arc::new(Mutex::new(State {
++                queue: VecDeque::new(),
++                in_progress: HashSet::new(),
++                done: HashSet::new(),
++            })),
++        }
++    }
++
++    pub fn start_workers(&self, threads: usize) {
++        for _ in 0..threads {
++            let state = self.state.clone();
++
++            std::thread::spawn(move || loop {
++                let job = {
++                    let mut s = state.lock().unwrap();
++                    s.queue.pop_front().map(|name| {
++                        s.in_progress.insert(name.clone());
++                        name
++                    })
++                };
++
++                let Some(name) = job else {
++                    std::thread::sleep(std::time::Duration::from_millis(30));
++                    continue;
++                };
++
++                // TODO real download
++
++                let mut s = state.lock().unwrap();
++                s.in_progress.remove(&name);
++                s.done.insert(name);
++            });
++        }
++    }
++}
++
++impl SpriteGateway for SpriteLoader {
++    fn has(&self, name: &str) -> bool {
++        self.state.lock().unwrap().done.contains(name)
++    }
++
++    fn request(&self, name: &str) {
++        let mut s = self.state.lock().unwrap();
++
++        if s.done.contains(name) || s.in_progress.contains(name) {
++            return;
++        }
++
++        s.queue.push_back(name.to_string());
++    }
++
++    fn request_batch(&self, names: &[String]) {
++        for n in names {
++            self.request(n);
++        }
++    }
++}
+
+diff --git a/crates/engine/src/factory/species_registry.rs b/crates/engine/src/factory/species_registry.rs
+@@
++use std::collections::HashSet;
++use std::sync::Arc;
++use contracts::api::species_source::SpeciesSource;
++use contracts::sprites::SpriteGateway;
++
+ pub struct SpeciesRegistry {
+-    species: Vec<String>,
++    list: Arc<[String]>,
++    lookup: HashSet<String>,
+ }
+ 
+ impl SpeciesRegistry {
++    pub fn build(
++        provider: &impl SpeciesSource,
++        _sprites: &impl SpriteGateway,
++    ) -> anyhow::Result<Self> {
++        let list = provider.all_species()?;
++
++        let lookup = list.iter().cloned().collect();
++
++        Ok(Self {
++            list: list.into(),
++            lookup,
++        })
++    }
++
++    pub fn iter(&self) -> impl Iterator<Item = &str> {
++        self.list.iter().map(|s| s.as_str())
++    }
+ }
+
+diff --git a/crates/engine/src/pokedex/model.rs b/crates/engine/src/pokedex/model.rs
+@@
++pub struct PokedexEntry {
++    pub id: u16,
++    pub name: String,
++    pub sprite_ready: bool,
++}
+
+diff --git a/crates/engine/src/pokedex/service.rs b/crates/engine/src/pokedex/service.rs
+@@
++use contracts::sprites::SpriteGateway;
++use crate::factory::species_registry::SpeciesRegistry;
++use super::{model::PokedexEntry, paginator::Paginator};
++
+ pub struct PokedexService<G: SpriteGateway> {
+     registry: SpeciesRegistry,
+     paginator: Paginator,
++    sprites: G,
+ }
+ 
+ impl<G: SpriteGateway> PokedexService<G> {
++    pub fn new(registry: SpeciesRegistry, paginator: Paginator, sprites: G) -> Self {
++        Self { registry, paginator, sprites }
++    }
++
++    pub fn page(&self, page: usize) -> Vec<PokedexEntry> {
++        let slice = self.paginator.slice(self.registry.iter().collect(), page);
++
++        slice.iter().enumerate().map(|(i, name)| {
++            PokedexEntry {
++                id: i as u16,
++                name: (*name).to_string(),
++                sprite_ready: self.sprites.has(name),
++            }
++        }).collect()
++    }
+ }
+
+diff --git a/crates/application/src/queries/get_pokedex.rs b/crates/application/src/queries/get_pokedex.rs
+@@
++use contracts::sprites::SpriteGateway;
+ use engine::pokedex::service::PokedexService;
+ 
+ pub struct GetPokedex<'a, G: SpriteGateway> {
+     service: &'a PokedexService<G>,
++    sprites: &'a G,
+ }
+ 
+ impl<'a, G: SpriteGateway> GetPokedex<'a, G> {
+     pub fn execute(&self, page: usize) -> Vec<PokedexEntry> {
+         let visible = self.service.page(page);
+         let next = self.service.page(page + 1);
+ 
+         let mut names = Vec::new();
+         names.extend(visible.iter().map(|e| e.name.clone()));
+         names.extend(next.iter().map(|e| e.name.clone()));
+ 
+         self.sprites.request_batch(&names);
+ 
+         visible
+     }
+ }
+
+diff --git a/crates/app/src/runtime/scheduler.rs b/crates/app/src/runtime/scheduler.rs
+@@
++pub fn start_sprite_workers(loader: &SpriteLoader) {
++    loader.start_workers(4);
++}

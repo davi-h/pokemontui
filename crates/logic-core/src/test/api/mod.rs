@@ -4,7 +4,7 @@ impl Default for ReqwestClient {
     }
 }
 /// Core API abstractions for interfacing with external services (PokéAPI, pokeget, etc.)
-use crate::models::*;
+use super::models::*;
 use std::process::Command;
 
 /// Error type returned by API operations.

@@ -1,6 +1,6 @@
 //! Storage layer handling saves and cache.
 
-use crate::models::*;
+use super::models::*;
 use std::collections::HashMap;
 
 #[derive(Debug)]

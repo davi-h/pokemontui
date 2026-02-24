@@ -51,3 +51,14 @@ pub trait Rng {
         &items[0].0
     }
 }
+
+
+/// Trait de RNG abstrato usado pelo domínio.
+/// 
+/// Motivo:
+/// - permitir mock em testes
+/// - desacoplar engine de rand crate
+/// - permitir RNG determinístico
+pub trait GameRng {
+    fn range(&mut self, range: std::ops::Range<u32>) -> u32;
+}

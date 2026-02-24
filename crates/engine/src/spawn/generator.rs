@@ -1,12 +1,12 @@
 use domain::pokemon::entity::Pokemon;
-use crate::rng::GameRng; // falta essa classe aqui
+use contracts::rng::GameRng;
 
 pub struct SpawnGenerator;
 
 impl SpawnGenerator {
-    pub fn spawn(mut pokemon: Pokemon) -> Pokemon {
-        let bonus = GameRng::range(0, 5) as u16;
-        pokemon.stats.attack += bonus;
+    pub fn spawn(mut pokemon: Pokemon, rng: &mut impl GameRng) -> Pokemon {
+        let bonus = rng.range(0..5);
+        pokemon.stats.attack += bonus as u16;
         pokemon
     }
 }

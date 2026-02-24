@@ -5,3 +5,5 @@ pub mod rng;
 pub mod spawn;
 pub mod sprites;
 pub mod storage;
+
+pub mod random;

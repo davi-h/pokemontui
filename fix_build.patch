@@ -1,0 +1,58 @@
+diff --git a/crates/engine/src/spawn/mod.rs b/crates/engine/src/spawn/mod.rs
+--- a/crates/engine/src/spawn/mod.rs
++++ b/crates/engine/src/spawn/mod.rs
+@@ -17,4 +17,5 @@ pub mod simulator;
+ pub mod registry;
+ pub mod context;
+ pub mod generator;
++pub mod rng;
+
+diff --git a/crates/engine/src/spawn/rng.rs b/crates/engine/src/spawn/rng.rs
+new file mode 100644
+--- /dev/null
++++ b/crates/engine/src/spawn/rng.rs
+@@ -0,0 +1,5 @@
++use contracts::rng::GameRng;
++
++pub fn roll(rng: &mut dyn GameRng, max: usize) -> usize {
++    rng.range(0..max)
++}
+
+diff --git a/crates/engine/src/spawn/simulator.rs b/crates/engine/src/spawn/simulator.rs
+--- a/crates/engine/src/spawn/simulator.rs
++++ b/crates/engine/src/spawn/simulator.rs
+@@ -1,4 +1,5 @@
+-use super::{engine::SpawnEngine, registry::SpawnRegistry, context::SpawnContext};
++use super::{registry::SpawnRegistry, context::SpawnContext};
++use crate::spawn::engine::SpawnEngine;
+
+diff --git a/crates/infrastructure/Cargo.toml b/crates/infrastructure/Cargo.toml
+--- a/crates/infrastructure/Cargo.toml
++++ b/crates/infrastructure/Cargo.toml
+@@ -1,5 +1,6 @@
+ [dependencies]
+ contracts = { path = "../contracts" }
++engine = { path = "../engine" }
+ rand = "0.8"
+
+diff --git a/crates/infrastructure/src/rng/seeded_rng.rs b/crates/infrastructure/src/rng/seeded_rng.rs
+--- a/crates/infrastructure/src/rng/seeded_rng.rs
++++ b/crates/infrastructure/src/rng/seeded_rng.rs
+@@ -1,4 +1,5 @@
+ use rand::{SeedableRng, RngCore};
++use std::ops::Range;
+
+ pub struct SeededRng {
+     pub inner: rand::rngs::StdRng
+@@ -15,13 +16,7 @@ impl contracts::rng::GameRng for SeededRng {
+     fn next_u32(&mut self) -> u32 {
+-        let mut x = self.state;
+-        x ^= x << 13;
+-        x ^= x >> 7;
+-        x ^= x << 17;
+-        self.state = x;
+-        x as u32
++        self.inner.next_u32()
+     }
+
+     fn range(&mut self, range: Range<usize>) -> usize {
