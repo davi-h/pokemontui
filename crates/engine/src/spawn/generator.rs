@@ -1,5 +1,5 @@
 use domain::pokemon::entity::Pokemon;
-use crate::rng::GameRng;
+use crate::rng::GameRng; // falta essa classe aqui
 
 pub struct SpawnGenerator;
 

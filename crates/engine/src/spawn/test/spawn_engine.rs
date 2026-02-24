@@ -1,6 +1,6 @@
 use domain::pokemon::entity::Pokemon;
 use crate::factory::pokemon_factory::PokemonFactory;
-use super::encounter_table::EncounterTable;
+use super::encounter_table::EncounterTable; // Classe ainda não criada
 
 pub struct SpawnEngine<F> {
     factory: F,

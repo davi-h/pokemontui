@@ -18,10 +18,12 @@ impl SpeciesRegistryBuilder {
         // cache
         if let Some(cached) = cache.get("species.txt") {
             return Ok(SpeciesRegistry::new(
-                cached
-                    .lines()
-                    .map(|s| s.to_string())
-                    .collect::<std::collections::HashSet<String>>()
+                    cached
+                        .lines()
+                        .map(|s| s.to_string())
+                        .collect::<std::collections::HashSet<String>>()
+                )
+            )
         }
 
         let mut set = HashSet::new();
