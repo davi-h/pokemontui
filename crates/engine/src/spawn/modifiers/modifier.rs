@@ -1,5 +1,11 @@
-use crate::spawn::{context::SpawnContext, entry::SpawnEntry};
+use crate::spawn::{context::SpawnContext, table::SpawnTable};
 
-pub trait WeightModifier {
-    fn modify(&self, ctx: &SpawnContext, entry: &SpawnEntry, weight: u32) -> u32;
+pub trait SpawnModifier {
+    /// Quanto menor o número, mais cedo executa
+    fn priority(&self) -> i32 {
+        0
+    }
+
+    /// Aplica transformação na tabela
+    fn modify(&self, ctx: &SpawnContext, table: &SpawnTable) -> SpawnTable;
 }

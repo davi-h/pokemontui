@@ -10,6 +10,21 @@ use domain::pokemon::{
     entity::Pokemon,
 };
 
+/// Define política de shiny (regra de probabilidade).
+/// Permite trocar regra sem alterar a factory.
+pub trait ShinyPolicy {
+    fn is_shiny<R: Rng>(&self, rng: &mut R) -> bool;
+}
+
+/// Política padrão — 1 / 4096
+pub struct DefaultShinyPolicy;
+
+impl ShinyPolicy for DefaultShinyPolicy {
+    fn is_shiny<R: Rng>(&self, rng: &mut R) -> bool {
+        rng.range(0..4096) == 0
+    }
+}
+
 /// Trait responsável por construir Pokémons
 pub trait PokemonFactory {
     fn create(&mut self, name: &str, level: u8) -> Result<Pokemon, FactoryError>;
@@ -24,13 +39,15 @@ pub enum FactoryError {
 }
 
 /// Implementação padrão de fábrica
-pub struct DefaultPokemonFactory<R, D>
+pub struct DefaultPokemonFactory<R, D, S>
 where
     R: Rng,
     D: PokemonDataSource,
+    S: ShinyPolicy,
 {
     rng: R,
     data: D,
+    shiny_policy: S,
 
     /// pool para sorteio
     species_pool: Vec<String>,
@@ -39,17 +56,19 @@ where
     species_index: HashSet<String>,
 }
 
-impl<R, D> DefaultPokemonFactory<R, D>
+impl<R, D, S> DefaultPokemonFactory<R, D, S>
 where
     R: Rng,
     D: PokemonDataSource,
+    S: ShinyPolicy,
 {
-    pub fn new(rng: R, data: D, species_pool: Vec<String>) -> Self {
+    pub fn new(rng: R, data: D, shiny_policy: S, species_pool: Vec<String>) -> Self {
         let species_index = species_pool.iter().cloned().collect();
 
         Self {
             rng,
             data,
+            shiny_policy,
             species_pool,
             species_index,
         }
@@ -69,8 +88,7 @@ where
         )
         .scale_with_level(level);
 
-        let shiny_roll = self.rng.range(0..4096);
-        let shiny = shiny_roll == 0;
+        let shiny = self.shiny_policy.is_shiny(&mut self.rng);
 
         Ok(
             PokemonBuilder::new(api_data.name)
@@ -82,10 +100,11 @@ where
     }
 }
 
-impl<R, D> PokemonFactory for DefaultPokemonFactory<R, D>
+impl<R, D, S> PokemonFactory for DefaultPokemonFactory<R, D, S>
 where
     R: Rng,
     D: PokemonDataSource,
+    S: ShinyPolicy,
 {
     /// Cria Pokémon específico
     fn create(&mut self, name: &str, level: u8) -> Result<Pokemon, FactoryError> {
@@ -103,8 +122,6 @@ where
         }
 
         let idx = self.rng.range(0..self.species_pool.len());
-
-        // clone evita conflito de borrow mutável + imutável
         let name = self.species_pool[idx].clone();
 
         self.build(&name, level)

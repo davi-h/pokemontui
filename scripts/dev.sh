@@ -1,0 +1,4 @@
+cargo fmt
+cargo clippy
+cargo check
+cargo test

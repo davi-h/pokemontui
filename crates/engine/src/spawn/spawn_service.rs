@@ -1,48 +1,89 @@
 use crate::factory::pokemon_factory::PokemonFactory;
-use crate::factory::error::FactoryError;
-use crate::spawn::rarity_engine::RarityEngine;
-use crate::spawn::environment::{EnvironmentProvider, Environment};
+use crate::spawn::{
+    context::SpawnContext,
+    engine::SpawnEngine,
+    modifiers::modifier::SpawnModifier,
+    table::SpawnTable,
+    rarity_engine::RarityEngine,
+};
 
 use contracts::rng::Rng;
 use domain::pokemon::entity::Pokemon;
 
-/// Serviço responsável por gerar Pokémon baseado
-/// em ambiente, raridade e RNG.
-pub struct SpawnService<F, R, E>
-where
-    F: PokemonFactory,
-    R: Rng,
-    E: EnvironmentProvider,
-{
-    factory: F,
-    rng: R,
-    rarity: RarityEngine,
-    env: E,
+
+/// Fonte de tabelas base.
+///
+/// Separado do EnvironmentProvider propositalmente
+/// para não acoplar lógica de mundo com spawn tables.
+pub trait SpawnTableProvider {
+    fn table(&self, ctx: &SpawnContext) -> SpawnTable;
 }
 
-impl<F, R, E> SpawnService<F, R, E>
+
+/// Serviço orquestrador do pipeline de spawn.
+///
+/// Pipeline:
+/// Context -> BaseTable -> Modifiers -> Engine -> Rarity
+pub struct SpawnService<F, R, P>
 where
     F: PokemonFactory,
     R: Rng,
-    E: EnvironmentProvider,
+    P: SpawnTableProvider,
 {
-    pub fn new(factory: F, rng: R, rarity: RarityEngine, env: E) -> Self {
+    engine: SpawnEngine<F>,
+    rng: R,
+    rarity: RarityEngine,
+    table_provider: P,
+    modifiers: Vec<Box<dyn SpawnModifier>>,
+}
+
+impl<F, R, P> SpawnService<F, R, P>
+where
+    F: PokemonFactory,
+    R: Rng,
+    P: SpawnTableProvider,
+{
+    pub fn new(
+        factory: F,
+        rng: R,
+        rarity: RarityEngine,
+        table_provider: P,
+    ) -> Self {
         Self {
-            factory,
+            engine: SpawnEngine::new(factory),
             rng,
             rarity,
-            env,
+            table_provider,
+            modifiers: Vec::new(),
         }
     }
 
-    /// Gera um Pokémon com chance de shiny baseada no ambiente
-    pub fn spawn(&mut self, level: u8) -> Result<Pokemon, FactoryError> {
-        // factory precisa ser mutável caso implemente cache interno ou RNG interno
-        let mut pokemon = self.factory.create_random(level)?;
+    /// Adiciona modifier ao pipeline
+    pub fn add_modifier<M>(&mut self, modifier: M)
+    where
+        M: SpawnModifier + 'static,
+    {
+        self.modifiers.push(Box::new(modifier));
 
-        let environment = self.env.current();
-        let chance = self.rarity.shiny_chance(&environment);
+        // ordena automaticamente
+        self.modifiers.sort_by_key(|m| m.priority());
+    }
 
+    /// Spawn principal (pipeline completo)
+    pub fn spawn(&mut self, ctx: SpawnContext) -> Result<Pokemon, SpawnError> {
+        // 1) tabela base
+        let mut table = self.table_provider.table(&ctx);
+
+        // 2) modifiers
+        for modifier in &self.modifiers {
+            table = modifier.modify(&ctx, &table);
+        }
+
+        // 3) spawn engine
+        let mut pokemon = self.engine.spawn(&table, &mut self.rng)?;
+
+        // 4) shiny roll
+        let chance = self.rarity.shiny_chance_from_context(&ctx);
         if self.rng.float() < chance {
             pokemon.set_shiny(true);
         }
@@ -50,23 +91,20 @@ where
         Ok(pokemon)
     }
 
-    /// Permite trocar RNG (útil pra testes determinísticos)
-    pub fn set_rng(&mut self, rng: R) {
-        self.rng = rng;
+    pub fn rng_mut(&mut self) -> &mut R {
+        &mut self.rng
     }
+}
 
-    /// Retorna ambiente atual
-    pub fn environment(&self) -> Environment {
-        self.env.current()
-    }
 
-    /// Permite trocar provider de ambiente em runtime
-    pub fn set_environment(&mut self, env: E) {
-        self.env = env;
-    }
 
-    /// Acesso interno ao factory (ex: debug / metrics)
-    pub fn factory(&self) -> &F {
-        &self.factory
+#[derive(Debug)]
+pub enum SpawnError {
+    Engine(crate::spawn::engine::SpawnError),
+}
+
+impl From<crate::spawn::engine::SpawnError> for SpawnError {
+    fn from(e: crate::spawn::engine::SpawnError) -> Self {
+        SpawnError::Engine(e)
     }
 }

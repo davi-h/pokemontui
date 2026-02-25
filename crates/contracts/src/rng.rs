@@ -1,5 +1,6 @@
 use std::ops::Range;
 
+<<<<<<< HEAD
 /// Contrato enxuto e universal para geração de números pseudoaleatórios.
 ///
 /// Esse trait é ideal para uso em Application/Domain/Engine, sem acoplamento
@@ -13,6 +14,18 @@ pub trait GameRng {
     }
 }
 
+=======
+/// Contrato único de RNG do sistema.
+///
+/// Garantias:
+/// - determinístico se seedável
+/// - mockável em testes
+/// - independente de crate externa
+///
+/// REGRA ARQUITETURAL:
+/// Este é o ÚNICO RNG permitido em engine/domain/application.
+/// Implementações concretas vivem em infrastructure.
+>>>>>>> 9d24c78 (v0.0.5)
 pub trait Rng {
     /// Número bruto
     fn next_u32(&mut self) -> u32;
@@ -63,6 +76,7 @@ pub trait Rng {
 
         &items[0].0
     }
+<<<<<<< HEAD
 }
 
 <<<<<<< HEAD
@@ -85,3 +99,6 @@ pub trait GameRng {
     fn range(&mut self, range: std::ops::Range<u32>) -> u32;
 }
 >>>>>>> 694a416 (v0.0.4)
+=======
+}
+>>>>>>> 9d24c78 (v0.0.5)

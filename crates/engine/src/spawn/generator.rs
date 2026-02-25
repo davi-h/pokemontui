@@ -1,4 +1,6 @@
+use contracts::rng::Rng;
 use domain::pokemon::entity::Pokemon;
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
 use contracts::rng::GameRng;
@@ -8,9 +10,20 @@ use crate::rng::GameRng; // falta essa classe aqui
 =======
 use contracts::rng::GameRng;
 >>>>>>> 694a416 (v0.0.4)
+=======
+>>>>>>> 9d24c78 (v0.0.5)
 
-pub struct SpawnGenerator;
+/// Gerador de spawn determinístico.
+///
+/// Regras:
+/// - depende apenas de contrato RNG
+/// - não conhece implementação concreta
+/// - reproduzível com seed fixa
+pub struct SpawnGenerator<'a> {
+    rng: R,
+}
 
+<<<<<<< HEAD
 impl SpawnGenerator {
 <<<<<<< HEAD
     pub fn spawn_with_rng(mut pokemon: Pokemon, rng: &mut dyn GameRng) -> Pokemon {
@@ -24,3 +37,9 @@ impl SpawnGenerator {
         pokemon
     }
 }
+=======
+
+impl<'a> SpawnGenerator<'a> {
+    pub fn new(rng: R) -> Self
+}
+>>>>>>> 9d24c78 (v0.0.5)
